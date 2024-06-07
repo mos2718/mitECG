@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<body>
+<img id="image1" />
+<br/>
+<canvas id="myCanvas" width="1800" height="800" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+
+ctx.fillStyle="#FFFFFF"; 
+ctx.fillRect(0,0,1800,800); 
+
+ctx.fillStyle="#FF0000"; 
+// Draw V lines
+var x1,y1,x2,y2;
+ctx.beginPath();
+ctx.strokeStyle="#FF0000";
+for(i=0;i<1800;i=i+36)
+{ctx.moveTo(i,0);
+ ctx.lineTo(i,800);
+}
+
+for(i=0;i<800; i=i+40)
+{ctx.moveTo(0,i);
+ ctx.lineTo(1800,i);
+}
+ctx.stroke();
+
+ctx.beginPath();
+ctx.lineWidth= 3;
+for(i=-1;i<=800; i=i+200)
+{
+ctx.moveTo(0,i);
+ctx.lineTo(1800,i);
+}
+for(i=-1;i<=1800; i=i+360)
+{
+ctx.moveTo(i,0);
+ctx.lineTo(i,800);
+}
+
+ctx.stroke();
+
+var  image1 = document.getElementById('image1');
+image1.src = c.toDataURL('image/jpeg');
+</script>
+
+</body>
+</html>
