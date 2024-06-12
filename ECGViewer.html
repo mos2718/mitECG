@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Layered Drawing</title>
+    <style>
+        canvas {
+            position: absolute;
+            top: 90;
+            left: 0;
+        }
+        #waveCanvas {
+            z-index: 1;
+        }
+        #gridCanvas {
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <button id="loadData">Load ECG Data</button>  &ensp;  &ensp; <label>May use key board left and right arrow to shift the waveform </label>&ensp;&ensp; <a href="https://hackmd.io/phftdz8kRA6sT4UyK6A6jA?view#Result">Further introduction</a> <br><br>
+    <canvas id="gridCanvas" width="1020" height="300"></canvas>
+    <canvas id="waveCanvas" width="1020" height="300"></canvas>
+    
+</body>
+<script >
+const channel1 = [];
+const channel2 = [];
+document.getElementById('loadData').addEventListener('click', function() {
+    fetch('100.dat')
+        .then(response => response.arrayBuffer())
+        .then(data => {
+            const ecgData = new Uint8Array(data);
+
+
+            for (let i = 0; i < ecgData.length; i += 3) {
+                const sample1 = ((ecgData[i] & 0xFF) | ((ecgData[i + 1] & 0x0F) << 8)) - 1024;
+                const sample2 = (((ecgData[i + 1] >> 4) & 0x0F) | ((ecgData[i + 2] & 0xFF) << 4)) - 1024;
+
+                channel1.push(sample1);
+                channel2.push(sample2);
+            }
+
+            drawECG(channel1, 'waveCanvas',0);
+        })
+        .catch(error => console.error('Error fetching ECG data:', error));
+});
+
+// 繪製波形
+function drawECG(data, canvasId, offset) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const xShift = 20;   
+    const width = canvas.width - xShift;
+    const height = canvas.height;
+    const xDivisions = 10;
+    const yDivisions = 6;
+    const sampleFrequency = 360;
+    const xLength= xDivisions * sampleFrequency; 
+    const mvCount = 200; // counts per millivolt
+    const originY = height / 2; // Origin Y coordinate (height / 2)
+    const centerValue = 0;
+    const scaleX =  width/(xDivisions* sampleFrequency);   //0.5; //width / data.length;
+    const scaleY = height/(yDivisions* mvCount);      // 0.1; //height /   (Math.max(...data) - Math.min(...data));
+   // alert(scaleY);
+   ctx.strokeStyle = '#00FF00'; // Line color for internal grid lines
+   ctx.lineWidth = 1; // Line width
+   
+   ctx.beginPath();
+
+  const oy = (height / 2) - ((data[ offset]-centerValue) * scaleY);
+ 
+    ctx.moveTo(0 + xShift, oy);
+    for (let i =1 ; i <= xLength; i++) {
+        const x = i * scaleX + xShift;
+        const y = (height / 2) - ((data[i+ offset]-centerValue) * scaleY);
+        ctx.lineTo(x, y);
+    }
+
+    ctx.stroke();
+}
+
+// 繪製格線
+function drawGrid() {
+            
+            const canvas = document.getElementById('gridCanvas');
+            const ctx = gridCanvas.getContext('2d');
+            const xShift = 20;   
+            const width = canvas.width - xShift;
+            const height = canvas.height;
+            const xDivisions = 10;
+            const yDivisions = 6;
+            const originY = height / 2; // Origin Y coordinate (height / 2)
+
+            // Calculate the step size for each division
+            const xStep = width / xDivisions;
+            const yStep = height / yDivisions;
+          
+            ctx.strokeStyle = '#FF0000'; // Line color for internal grid lines
+            ctx.lineWidth = 1; // Line width
+
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#000000'; // Text color
+
+            // Draw vertical lines and X-axis labels
+            for (let i = 0; i <= xDivisions; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * xStep + xShift, 0);
+                ctx.lineTo(i * xStep + xShift, height);
+                ctx.stroke();
+                if (i > 0) {
+                    ctx.fillText(i + 's', i * xStep - 10, originY + 15); // X-axis labels
+                }
+            }
+
+            // Draw horizontal lines and Y-axis labels
+            for (let i = 0; i <= yDivisions; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0 + xShift, i * yStep);
+                ctx.lineTo(width  + xShift , i * yStep);
+                ctx.stroke();
+                const yLabelValue = Math.floor((originY - i * yStep) / yStep);
+                ctx.fillText(yLabelValue + ' mV', 5, i * yStep + 5); // Y-axis labels
+            }
+
+            // Draw X and Y axes
+            ctx.strokeStyle = '#000000'; // Line color for axes
+            ctx.beginPath();
+            ctx.moveTo(0 + xShift, originY);
+            ctx.lineTo(width + xShift, originY);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(0 + xShift, 0);
+            ctx.lineTo(0 + xShift, height);
+            ctx.stroke();
+        }
+
+
+
+
+// 初始化，劃格線
+ drawGrid();
+
+ // 允許調整波形的起始位置
+let offsetX = 0;
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') {
+        // 也需判斷是否超過長度
+        offsetX += 10;
+    } else if (event.key === 'ArrowLeft') {
+       if(offsetX>10 ) offsetX -= 10;
+    }
+    drawECG(channel1, 'waveCanvas',offsetX);
+    // drawWave(offsetX);
+});
+
+
+
+</script>
+</html>
