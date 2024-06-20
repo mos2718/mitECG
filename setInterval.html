@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Sin Wave</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="sinCanvas" width="800" height="400"></canvas>
+    <br>
+    <button id="startBtn">開始</button>
+    <button id="stopBtn">結束</button>
+    <br>
+    <label id="timeLabel">經過時間: 0 秒</label>
+
+    <script >
+const canvas = document.getElementById('sinCanvas');
+const ctx = canvas.getContext('2d');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const timeLabel = document.getElementById('timeLabel');
+
+let intervalID;
+let elapsedTime = 0;
+let phase = 0;
+const frequency = 0.2 * Math.PI; // 0.2π
+const interval = 100; // 0.1 秒
+
+// 繪製 sin 波形
+function drawSinWave() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+
+    for (let x = 0; x < canvas.width; x++) {
+        const y = canvas.height / 2 + 50 * Math.sin((x * 10 * Math.PI / canvas.width) + phase);
+        ctx.lineTo(x, y);
+    }
+
+    ctx.stroke();
+}
+
+// 開始動畫
+function startAnimation() {
+    if (intervalID) return; // 如果動畫已經在運行，則不執行任何操作
+
+    intervalID = setInterval(() => {
+        phase += frequency;
+        elapsedTime += interval / 1000;
+        drawSinWave();
+        timeLabel.textContent = `經過時間: ${elapsedTime.toFixed(1)} 秒`;
+    }, interval);
+}
+
+// 停止動畫
+function stopAnimation() {
+    clearInterval(intervalID);
+    intervalID = null;
+}
+
+// 設置按鈕事件
+startBtn.addEventListener('click', startAnimation);
+stopBtn.addEventListener('click', stopAnimation);
+
+// 初始繪製一次波形
+drawSinWave();
+
+
+
+
+    </script>
+</body>
+</html>
